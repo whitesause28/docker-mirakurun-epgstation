@@ -1,30 +1,68 @@
-- name: PT3-S0
-  types:
-    - BS
-    - CS
-  command: recpt1 --device /dev/pt3video0 <channel> - -
-  decoder: arib-b25-stream-test
-  isDisabled: false
-
+# PT3
 - name: PT3-S1
   types:
     - BS
     - CS
-  command: recpt1 --device /dev/pt3video1 <channel> - -
-  decoder: arib-b25-stream-test
-  isDisabled: false
-
-- name: PT3-T0
-  types:
-    - GR
-  command: recpt1 --device /dev/pt3video2 <channel> - -
+  command: dvbv5-zap -a 0 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbs.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter0/dvr0
   decoder: arib-b25-stream-test
   isDisabled: false
 
 - name: PT3-T1
   types:
     - GR
-  command: recpt1 --device /dev/pt3video3 <channel> - -
+  command: dvbv5-zap -a 1 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbt.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter1/dvr0
   decoder: arib-b25-stream-test
   isDisabled: false
 
+- name: PT3-S2
+  types:
+    - BS
+    - CS
+  command: dvbv5-zap -a 2 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbs.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter2/dvr0
+  decoder: arib-b25-stream-test
+  isDisabled: false
+
+- name: PT3-T2
+  types:
+    - GR
+  command: dvbv5-zap -a 3 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbt.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter3/dvr0
+  decoder: arib-b25-stream-test
+  isDisabled: false
+
+- name: PT3-S3
+  types:
+    - BS
+    - CS
+  command: dvbv5-zap -a 4 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbs.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter4/dvr0
+  decoder: arib-b25-stream-test
+  isDisabled: false
+
+- name: PT3-T3
+  types:
+    - GR
+  command: dvbv5-zap -a 5 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbt.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter5/dvr0
+  decoder: arib-b25-stream-test
+  isDisabled: false
+
+- name: PT3-S4
+  types:
+    - BS
+    - CS
+  command: dvbv5-zap -a 6 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbs.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter6/dvr0
+  decoder: arib-b25-stream-test
+  isDisabled: false
+
+- name: PT3-T4
+  types:
+    - GR
+  command: dvbv5-zap -a 7 -c /usr/local/dvbconf-for-isdb/conf/dvbv5_channels_isdbt.conf -r -P <channel>
+  dvbDevicePath: /dev/dvb/adapter7/dvr0
+  decoder: arib-b25-stream-test
+  isDisabled: false

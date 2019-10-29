@@ -17,15 +17,12 @@ services:
         environment:
             TZ: "Asia/Tokyo"
         devices:
-            - /dev/pt3video0:/dev/pt3video0
-            - /dev/pt3video1:/dev/pt3video1
-            - /dev/pt3video2:/dev/pt3video2
-            - /dev/pt3video3:/dev/pt3video3
+            - /dev/dvb:/dev/dvb
             #- /dev/bus/usb/00x/00x # card reader
         #restart: always
 
     mysql:
-        image: mariadb:10.3
+        image: mariadb:latest
         container_name: mysql
         volumes:
             - mysql-db:/var/lib/mysql
@@ -35,7 +32,7 @@ services:
             MYSQL_ROOT_PASSWORD: epgstation
             MYSQL_DATABASE: epgstation
             TZ: "Asia/Tokyo"
-        command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --performance-schema=false --expire_logs_days=1
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --performance-schema=false --expire_logs_days=1
         #restart: always
 
     epgstation:
@@ -53,6 +50,8 @@ services:
             - ./recorded:/usr/local/EPGStation/recorded
         environment:
             TZ: "Asia/Tokyo"
+        devices:
+            - /dev/dri:/dev/dri
         links:
             - mirakurun:mirakurun
             - mysql:mysql

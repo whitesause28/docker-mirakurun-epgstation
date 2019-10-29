@@ -1,5 +1,6 @@
 {
     "serverPort": 8888,
+    "subDirectory": "epgstation",
     "mirakurunPath": "http://mirakurun:40772/",
     "mysql": {
         "host": "mysql",
@@ -7,61 +8,108 @@
         "database": "epgstation",
         "password": "epgstation",
         "connectTimeout": 1000,
-        "connectionLimit": 10
+        "connectionLimit": 10,
+        "charset": "utf8mb4"
     },
+    "recordedFormat": "%TITLE% (%CHNAME% %YEAR%-%MONTH%-%DAY%%DOW%)",
+    "recorded": "/mnt/nas/EPGStation",
+    "thumbnail": "/mnt/home/epgstation/thumbnail",
+    "streamFilePath": "/mnt/home/epgstation/stream",
+    "recordedTmp": "recorded",
+    "ffmpeg": "/usr/local/bin/ffmpeg",
+    "ffprobe": "/usr/local/bin/ffprobe",
+    "recordedHistoryRetentionPeriodDays": 90,
+    "timeSpecifiedStartMargin": 5,
+    "convertStr": "oneByteWithCH",
+    "suppressEPGUpdateLog": false,
+    "thumbnailPosition": 300,
     "excludeServices": [],
-    "maxEncode": 2,
+    "maxEncode": 1,
     "encode": [
         {
-            "name": "H264",
-            "cmd": "/bin/bash /usr/local/EPGStation/config/enc.sh main",
-            "suffix": ".mp4",
+            "name": "mkv (H264/opus/ass)",
+            "cmd": "%NODE% %ROOT%/config/encmkv.js",
+            "suffix": ".mkv",
             "default": true
         },
         {
-            "name": "H264-sub",
-            "cmd": "/bin/bash /usr/local/EPGStation/config/enc.sh sub",
-            "suffix": "-sub.mp4"
+            "name": "mp4 (H264/aac)",
+            "cmd": "%NODE% %ROOT%/config/enc.js",
+            "suffix": ".mp4"
         }
     ],
-    "delts": false,
+    "delts": true,
     "recordedViewer": {
-        "ios": "infuse://x-callback-url/play?url=http://ADDRESS",
-        "android": "intent://ADDRESS#Intent;package=com.mxtech.videoplayer.ad;type=video;scheme=http;end"
+        "ios": "infuse://x-callback-url/play?url=https://ADDRESS",
+        "android": "intent://ADDRESS#Intent;package=org.videolan.vlc;type=video;scheme=https;end",
+        "win" : "vlc://openstream?from=url&url=https://ADDRESS"
     },
     "recordedDownloader": {
-        "ios": "vlc-x-callback://x-callback-url/download?url=http://ADDRESS&filename=FILENAME",
-        "android": "intent://ADDRESS#Intent;package=com.dv.adm;type=video;scheme=http;end"
+        "ios": "vlc-x-callback://x-callback-url/download?url=https://ADDRESS&filename=FILENAME",
+        "android": "intent://ADDRESS#Intent;package=android.app.DownloadManager;type=video;scheme=https;end",
+        "win" : "vlc://openstream?from=url&url=https://ADDRESS"
     },
-
-    "maxStreaming": 4,
-    "mpegTsStreaming": [
+    "maxStreaming": 1,
+    "recordedHLS": [
         {
-            "name": "1280x720(main)",
-            "cmd": "%FFMPEG% -re -dual_mono_mode main -i pipe:0 -c:a aac -ar 48000 -ab 192k -ac 2 -c:v libx264 -s 1280x720 -vf yadif -preset veryfast -aspect 16:9 -vb 3000k -f mpegts pipe:1"
+            "name": "240p (160k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v h264_qsv -i %INPUT% -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -f hls -hls_time 6 -hls_list_size 0 -hls_allow_cache 1 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf scale_qsv=426:240 -r 12 -aspect 16:9 -c:v h264_qsv -vb 100k -g 72 -c:a libfdk_aac -profile:a aac_he_v2 -ar 48000 -ab 32k -ac 2 -flags +loop-global_header %OUTPUT%"
         },
         {
-            "name": "720x480(main)",
-            "cmd": "%FFMPEG% -re -dual_mono_mode main -i pipe:0 -c:a aac -ar 48000 -ab 128k -ac 2 -c:v libx264 -s 720x480 -vf yadif -preset veryfast -aspect 16:9 -vb 1500k -f mpegts pipe:1"
+            "name": "480p (1300k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v h264_qsv -i %INPUT% -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -f hls -hls_time 6 -hls_list_size 0 -hls_allow_cache 1 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf scale_qsv=854:480 -aspect 16:9 -c:v h264_qsv -vb 1300k -g 180 -c:a libfdk_aac -ar 48000 -ab 96k -ac 2 -flags +loop-global_header %OUTPUT%"
+        },
+        {
+            "name": "720p (3000k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v h264_qsv -i %INPUT% -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -f hls -hls_time 6 -hls_list_size 0 -hls_allow_cache 1 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf scale_qsv=1280:720 -aspect 16:9 -c:v h264_qsv -vb 3000k -g 180 -c:a libfdk_aac -ar 48000 -ab 160k -ac 2 -flags +loop-global_header %OUTPUT%"
+        },
+        {
+            "name": "1080p (6000k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v h264_qsv -i %INPUT% -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -f hls -hls_time 6 -hls_list_size 0 -hls_allow_cache 1 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -aspect 16:9 -c:v h264_qsv -vb 6000k -g 180 -c:a libfdk_aac -ar 48000 -ab 160k -ac 2 -flags +loop-global_header %OUTPUT%"
+        }
+    ],
+    "liveHLS": [
+        {
+            "name": "240p (160k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -sn -f hls -hls_time 2 -hls_list_size 17 -hls_allow_cache 0 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf vpp_qsv=deinterlace=2:w=426:h=240 -r 12 -aspect 16:9 -c:v h264_qsv -preset veryslow -vb 100k -g 24 -c:a libfdk_aac -profile:a aac_he_v2 -ar 48000 -ab 32k -ac 2 -flags +loop-global_header %OUTPUT%"
+        },
+        {
+            "name": "480p (1300k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -sn -f hls -hls_time 2 -hls_list_size 17 -hls_allow_cache 0 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf vpp_qsv=deinterlace=2:w=854:h=480:framerate=30000/1001 -aspect 16:9 -c:v h264_qsv -preset veryslow -vb 1300k -g 60 -c:a libfdk_aac -ar 48000 -ab 96k -ac 2 -flags +loop-global_header %OUTPUT%"
+        },
+        {
+            "name": "720p (3000k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -sn -f hls -hls_time 2 -hls_list_size 17 -hls_allow_cache 0 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf vpp_qsv=deinterlace=2:w=1280:h=720:framerate=30000/1001 -aspect 16:9 -c:v h264_qsv -preset veryslow -vb 3000k -g 60 -c:a libfdk_aac -ar 48000 -ab 160k -ac 2 -flags +loop-global_header %OUTPUT%"
+        },
+        {
+            "name": "1080p (6000k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -map 0:v -map 0:a -ignore_unknown -max_muxing_queue_size 1024 -f hls -hls_time 2 -hls_list_size 17 -hls_allow_cache 0 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads 0 -vf vpp_qsv=deinterlace=2:framerate=30000/1001 -aspect 16:9 -c:v h264_qsv -preset veryslow -vb 6000k -g 60 -c:a libfdk_aac -ar 48000 -ab 160k -ac 2 -sn -flags +loop-global_header %OUTPUT%"
+        }
+    ],
+    "mpegTsStreaming": [
+        {
+            "name": "240p (160k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -vf vpp_qsv=deinterlace=2:w=426:h=240 -r 12 -aspect 16:9 -c:v h264_qsv -vb 100k -g 48 -c:a libfdk_aac -profile:a aac_he_v2 -ar 48000 -ab 32k -ac 2 -f mpegts pipe:1"
+        },
+        {
+            "name": "480p (1300k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -vf vpp_qsv=deinterlace=2:w=854:h=480:framerate=30000/1001 -aspect 16:9 -c:v h264_qsv -vb 1300k -g 120 -c:a libfdk_aac -ar 48000 -ab 96k -ac 2 -f mpegts pipe:1"
+        },
+        {
+            "name": "720p (3000k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -vf vpp_qsv=deinterlace=2:w=1280:h=720:framerate=30000/1001 -aspect 16:9 -c:v h264_qsv -vb 3000k -g 120 -c:a libfdk_aac -ar 48000 -ab 160k -ac 2 -f mpegts pipe:1"
+        },
+        {
+            "name": "1080p (6000k)",
+            "cmd": "%FFMPEG% -hwaccel qsv -re -dual_mono_mode main -c:v mpeg2_qsv -i pipe:0 -vf vpp_qsv=deinterlace=2:framerate=30000/1001 -aspect 16:9 -c:v h264_qsv -vb 6000k -g 120 -c:a libfdk_aac -ar 48000 -ab 160k -ac 2 -f mpegts pipe:1"
         },
         {
             "name": "無変換"
         }
     ],
     "mpegTsViewer": {
-        "ios": "vlc-x-callback://x-callback-url/stream?url=http://ADDRESS",
-        "android": "intent://ADDRESS#Intent;package=com.mxtech.videoplayer.ad;type=video;scheme=http;end"
-    },
-
-    "recordedHLS": [
-        {
-            "name": "1280x720(main)",
-            "cmd": "%FFMPEG% -dual_mono_mode main -i %INPUT% -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads auto -c:a aac -ar 48000 -ab 192k -ac 2 -c:v libx264 -s 1280x720 -preset veryfast -aspect 16:9 -vb 3000k -flags +loop-global_header %OUTPUT%"
-        },
-        {
-            "name": "720x480(main)",
-            "cmd": "%FFMPEG% -dual_mono_mode main -i %INPUT% -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1 -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -threads auto -c:a aac -ar 48000 -ab 128k -ac 2 -c:v libx264 -s 720x480 -preset veryfast -aspect 16:9 -vb 1300k -flags +loop-global_header %OUTPUT%"
-        }
-    ]
+        "ios": "vlc-x-callback://x-callback-url/stream?url=https://ADDRESS",
+        "android": "intent://ADDRESS#Intent;package=org.videolan.vlc;type=video;scheme=https;end",
+        "win" : "vlc://openstream?from=url&url=https://ADDRESS"
+    }
 }
-
